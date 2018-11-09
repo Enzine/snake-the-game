@@ -10,6 +10,7 @@ pygame.font.init()
 
 crashed = False
 paused = False
+first_loop = True
 
 # Display
 display_width = 640
@@ -20,6 +21,8 @@ line_width = 10
 snake_width = 25
 snake_x = 50
 snake_y = 50
+snake_part_x = 0
+snake_part_y = 0
 direction = 'RIGHT'
 delay_on_tick = 0.05
 snake = [[snake_x, snake_y]]
@@ -38,27 +41,15 @@ snake_color = (86, 153, 216)
 snake_border_color = (23, 138, 183)
 poop_color = (160, 78, 27)
 
-# Fill display area
+# Create screen for display.
 screen = pygame.display.set_mode((display_width, display_height))
-screen.fill((255,180,120))
-
-# Draw borders
-pygame.draw.rect(screen, border_color, [0,0,display_width,line_width])
-pygame.draw.rect(screen, border_color, [0,0,line_width, display_height])
-pygame.draw.rect(screen, border_color, [0,display_height-line_width,display_width,line_width])
-pygame.draw.rect(screen, border_color, [display_width-line_width,0,line_width, display_height+line_width])
-
-# Draw snake
-pygame.draw.rect(screen, snake_color, [50, 50, snake_width, snake_width])
-
-pygame.display.flip()
 
 # Fonts
 display_font = pygame.font.SysFont('Arial', 20)
 pause_font = pygame.font.SysFont('Arial', 50)
 
+# Main game loop.
 while not crashed:
-    print(delay_on_tick)
     time.sleep(delay_on_tick)
     textsurface = display_font.render('Napatut kakat: {}'.format(poops_collected), False, (0, 0, 0))
     pause_text = pause_font.render('Peli paussilla, paina P', False, (0, 0, 0))
@@ -67,16 +58,18 @@ while not crashed:
         if event.type == pygame.QUIT:
             crashed = True
         
-        ###############################
+        # Track keyboard.
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_LEFT:
+            if direction != 'RIGHT' and event.key == pygame.K_LEFT:
                 direction = 'LEFT'
-            if event.key == pygame.K_RIGHT:
+            if direction != 'LEFT' and event.key == pygame.K_RIGHT:
                 direction = 'RIGHT'
-            if event.key == pygame.K_UP:
+            if direction != 'DOWN' and event.key == pygame.K_UP:
                 direction = 'UP'
-            if event.key == pygame.K_DOWN:
+            if direction != 'UP' and event.key == pygame.K_DOWN:
                 direction = 'DOWN'
+            
+            # Handle pause.
             if event.key == pygame.K_p:
                 paused = True
                 screen.blit(pause_text,(20, 40))
@@ -87,8 +80,8 @@ while not crashed:
                         if event.type == pygame.KEYDOWN:
                             if event.key == pygame.K_p:
                                 paused = False
-        ###############################
 
+    # Change snake position.
     if direction == 'LEFT':
         snake_x -= 5
     if direction == 'RIGHT':
@@ -98,34 +91,40 @@ while not crashed:
     if direction == 'DOWN':
         snake_y += 5
 
+    # Handle snake movements.
     if (((poop_x + poop_size) > snake_x) and (poop_x < snake_x + snake_width) and ((poop_y + poop_size) > snake_y) and (poop_y < (snake_y + snake_width))):
         poops_collected += 1
         poop_on_field = False
-
-    if not poop_on_field:
+        snake.append([snake_x, snake_y])
         if delay_on_tick > 0.02:
             delay_on_tick *= 0.95
+    elif len(snake) > 1:
+        snake.pop(0)
+        snake.append([snake_x, snake_y])
+    elif len(snake) == 1:
+        snake = []
+        snake.append([snake_x, snake_y])
+
+    if not poop_on_field:
         poop_x = random.randint(20, display_width - 20)
         poop_y = random.randint(20, display_height - 20)
         poop_on_field = True
 
+    # Draw environment.
     screen.fill((255,180,120))
     screen.blit(textsurface,(10,10))
-    pygame.draw.rect(screen, poop_color, [poop_x, poop_y, poop_size, poop_size])
     pygame.draw.rect(screen, border_color, [0,0,display_width,line_width])
     pygame.draw.rect(screen, border_color, [0,0,line_width, display_height])
     pygame.draw.rect(screen, border_color, [0,display_height-line_width,display_width,line_width])
     pygame.draw.rect(screen, border_color, [display_width-line_width,0,line_width, display_height+line_width])
-    pygame.draw.rect(screen, snake_color, [snake_x, snake_y, snake_width, snake_width])
+    pygame.draw.rect(screen, poop_color, [poop_x, poop_y, poop_size, poop_size])
+
+    # Draw snake.
+    for snake_part in snake:
+        pygame.draw.rect(screen, snake_color, [snake_part[0], snake_part[1], snake_width, snake_width])
+
+    # Show snapshot of game.
     pygame.display.flip()
     
 pygame.quit()
 exit(0)
-
-# pygame.draw.rect(screen, snake_color, [75, 50, snake_width, snake_width])
-
-# pygame.draw.rect(screen, snake_border, [75, 50, 5, snake_width])
-# pygame.draw.rect(screen, snake_border, [100, 50, 5, snake_width])
-
-# pygame.draw.rect(screen, (255,255,255), [55, 55, 5, 10])
-# pygame.draw.rect(screen, (0,0,0), [55, 60, 5, 5])
